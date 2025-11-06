@@ -23,6 +23,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+// Serve robots.txt and sitemap.xml with minimal caching to avoid stale search engine data
+app.get('/robots.txt', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
 // Sessions for admin auth (initialized after MONGODB_URI is available)
 
 // Check for required environment variables
@@ -106,12 +121,14 @@ app.use(session({
 const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true },
+    oldPrice: { type: Number },
     category: { type: String, required: true },
     description: { type: String },
     imageUrl: { type: String },
     publicId: { type: String }, // To store Cloudinary public_id for deletions
     stock: { type: Number, default: 0, min: 0 }, // Stock quantity
     inStock: { type: Boolean, default: true }, // Computed from stock > 0
+    sizes: { type: [Number], default: undefined }, // optional sizes
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -133,7 +150,9 @@ const orderItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    quantity: { type: Number, required: true }
+    quantity: { type: Number, required: true },
+    size: { type: Number },
+    color: { type: String }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -163,6 +182,35 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', orderSchema);
 
+// Helper: parse sizes string/array into number array (supports lists and ranges)
+function parseSizesField(input) {
+    if (Array.isArray(input)) {
+        return input
+            .map(n => parseInt(n, 10))
+            .filter(n => !isNaN(n));
+    }
+    if (typeof input !== 'string') return undefined;
+    const trimmed = input.trim();
+    if (!trimmed) return undefined;
+    // Expand ranges like "40-43" or "40 to 43"
+    // Support ASCII hyphen-minus and Unicode en/em dashes
+    const rangeMatch = trimmed.match(/^(\d{1,3})\s*(?:-|–|—|to)\s*(\d{1,3})$/i);
+    if (rangeMatch) {
+        const start = parseInt(rangeMatch[1], 10);
+        const end = parseInt(rangeMatch[2], 10);
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+            const out = [];
+            for (let s = start; s <= end; s++) out.push(s);
+            return out;
+        }
+    }
+    // Split on commas or whitespace for list
+    return trimmed
+        .split(/[\s,]+/)
+        .map(s => parseInt(s, 10))
+        .filter(n => !isNaN(n));
+}
+
 // SMS Notification helper - sends SMS notifications only
 async function sendNotification(customer, message, type = 'order') {
     try {
@@ -174,6 +222,44 @@ async function sendNotification(customer, message, type = 'order') {
         }
     } catch (e) {
         console.error('❌ SMS notification error:', e.message);
+    }
+}
+
+// Helper: extract color from a product description string
+function parseColorFromDescription(description) {
+    try {
+        if (!description || typeof description !== 'string') return null;
+        const text = description.toLowerCase();
+
+        // 1) Try labeled patterns like: "color: Red", "colour - Navy Blue", "color=wine red", or "color blue"
+        // Allow hyphens, numbers, slashes & plus for combinations
+        const labelMatch = text.match(/colou?r\s*(?:[:\-=]?\s*)([a-z0-9\-\s\/&+]+)/i);
+        if (labelMatch && labelMatch[1]) {
+            const raw = labelMatch[1].trim();
+            // Stop at common delimiters or next label like size
+            const cleaned = raw.split(/\.|,|;|\n|\(|\)|\[|\]|\||\*|\bsize\b|\bquantity\b|\bqty\b/i)[0].trim();
+            if (cleaned) {
+                // If multi options like "black/white", choose the first as primary color
+                const primary = cleaned.split(/[\/|&+]/)[0].trim();
+                return primary ? primary.replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null;
+            }
+        }
+
+        // 2) Fallback: search for known color names anywhere in text
+        const COLORS = [
+            'black','white','red','blue','green','yellow','orange','purple','pink','brown','grey','gray',
+            'navy','navy blue','sky blue','light blue','dark blue','maroon','beige','cream','gold','silver',
+            'teal','turquoise','magenta','violet','indigo','burgundy','khaki','olive'
+        ];
+        for (const c of COLORS.sort((a,b)=>b.length-a.length)) {
+            const re = new RegExp(`\\b${c.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+            if (re.test(text)) {
+                return c.replace(/\b\w/g, x => x.toUpperCase());
+            }
+        }
+        return null;
+    } catch (e) {
+        return null;
     }
 }
 
@@ -323,6 +409,12 @@ app.post('/api/orders', async(req, res) => {
             }
             
             const price = parseFloat(product.price) || 0;
+            // Derive color from product description if present, allow client-provided override
+            const clientColor = typeof item.color === 'string' ? item.color.trim() : null;
+            const derivedColor = parseColorFromDescription(product.description);
+            if (!clientColor && derivedColor) {
+                console.log('Derived color for product', product.name, '=>', derivedColor, '\nDescription:', product.description);
+            }
             const lineTotal = price * quantity;
             
             subtotal += lineTotal;
@@ -330,7 +422,9 @@ app.post('/api/orders', async(req, res) => {
                 productId: product._id,
                 name: product.name,
                 price: price,
-                quantity: quantity
+                quantity: quantity,
+                size: item.size ? parseInt(item.size) : undefined,
+                color: (clientColor || derivedColor) || undefined
             });
             
             // Track stock reduction
@@ -419,7 +513,7 @@ app.post('/api/orders', async(req, res) => {
 
         // Send notifications via Email, WhatsApp, SMS (multi-channel)
         try {
-            const itemsList = orderItems.map(i => `${i.name} (x${i.quantity})`).join(', ');
+            const itemsList = orderItems.map(i => `${i.name}${i.size ? ' [size ' + i.size + ']' : ''}${i.color ? ' [' + i.color + ']' : ''} (x${i.quantity})`).join(', ');
             const message = `NANA BAAKO STORES: Order received! Items: ${itemsList}. Total: GH₵${total.toFixed(2)}. Please complete payment.`;
             sendNotification(customer, message, 'order');
         } catch (notifError) {
@@ -509,7 +603,7 @@ app.get('/api/paystack/callback', async (req, res) => {
                 
                 // Send notifications via Email, WhatsApp, SMS
                 try {
-                    const itemsList = order.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+                    const itemsList = order.items.map(i => `${i.name}${i.size ? ' [size ' + i.size + ']' : ''} (x${i.quantity})`).join(', ');
                     const message = `NANA BAAKO STORES: Payment confirmed! Order for ${itemsList} is being processed.`;
                     sendNotification(order.customer, message, 'order');
                 } catch (notifError) {
@@ -582,7 +676,7 @@ app.put('/api/admin/orders/:id/status', requireAdmin, async (req, res) => {
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
         let text;
-        const orderItems = order.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+        const orderItems = order.items.map(i => `${i.name}${i.size ? ' [size ' + i.size + ']' : ''} (x${i.quantity})`).join(', ');
         if (status === 'processing') {
             text = `Your order for ${orderItems} is now being processed. We're preparing your items for shipment.`;
         } else if (status === 'shipped') {
@@ -663,6 +757,351 @@ app.get('/api/admin/orders', requireAdmin, async(req, res) => {
     } catch (error) {
         console.error('Error fetching orders:', error);
         res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+    }
+});
+
+// Admin: delete order
+app.delete('/api/admin/orders/:id', requireAdmin, async(req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        await Order.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Order deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting order:', error);
+        res.status(500).json({ message: 'Failed to delete order', error: error.message });
+    }
+});
+
+// Admin: download orders as formatted receipts (HTML)
+app.get('/api/admin/orders/download', requireAdmin, async(req, res) => {
+    try {
+        const orders = await Order.find().sort({ createdAt: -1 });
+        
+        // Create receipt HTML template
+        const receiptHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders Receipt - NANA BAAKO STORES</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @media print {
+            .receipt {
+                page-break-after: always;
+                margin-bottom: 0;
+            }
+            .receipt:last-child {
+                page-break-after: auto;
+            }
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .receipt {
+            max-width: 400px;
+            margin: 0 auto 40px auto;
+            background: white;
+            padding: 30px;
+            border: 2px solid #000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .store-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .store-tagline {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .receipt-info {
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            width: 40%;
+        }
+        
+        .info-value {
+            width: 60%;
+            text-align: right;
+        }
+        
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 15px 0;
+        }
+        
+        .items-section {
+            margin: 20px 0;
+        }
+        
+        .items-header {
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            padding: 5px 0;
+        }
+        
+        .item-name {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .item-quantity {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 30px;
+        }
+        
+        .item-price {
+            text-align: right;
+            min-width: 80px;
+        }
+        
+        .totals-section {
+            margin-top: 20px;
+            border-top: 2px dashed #000;
+            padding-top: 15px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .total-label {
+            font-weight: bold;
+        }
+        
+        .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            border-top: 2px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .payment-info {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #000;
+            font-size: 12px;
+        }
+        
+        .payment-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .status-paid {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .status-failed {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .order-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px dashed #000;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .thank-you {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    ${orders.map(order => {
+        const date = new Date(order.createdAt);
+        const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const paymentStatus = order.payment?.status || 'pending';
+        const statusClass = paymentStatus === 'paid' ? 'status-paid' : paymentStatus === 'failed' ? 'status-failed' : 'status-pending';
+        
+        return `
+    <div class="receipt">
+        <div class="receipt-header">
+            <div class="store-name">NANA BAAKO STORES</div>
+            <div class="store-tagline">Quality Products, Great Service</div>
+        </div>
+        
+        <div class="receipt-info">
+            <div class="info-row">
+                <span class="info-label">Order Number:</span>
+                <span class="info-value">${order.orderNumber || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date:</span>
+                <span class="info-value">${dateStr}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Time:</span>
+                <span class="info-value">${timeStr}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="info-row">
+                <span class="info-label">Customer:</span>
+                <span class="info-value">${order.customer?.name || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">${order.customer?.phone || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${order.customer?.email || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Location:</span>
+                <span class="info-value">${order.customer?.location || 'N/A'}</span>
+            </div>
+        </div>
+        
+        <div class="items-section">
+            <div class="items-header">ITEMS</div>
+            ${order.items.map(item => `
+            <div class="item-row">
+                <span class="item-name">${item.name}</span>
+                <span class="item-quantity">x${item.quantity}</span>
+                <span class="item-price">GH₵${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+            `).join('')}
+        </div>
+        
+        <div class="totals-section">
+            <div class="total-row">
+                <span class="total-label">Subtotal:</span>
+                <span>GH₵${Number(order.subtotal || 0).toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">Service Fee:</span>
+                <span>GH₵${Number(order.fee || 0).toFixed(2)}</span>
+            </div>
+            <div class="total-row grand-total">
+                <span>TOTAL:</span>
+                <span>GH₵${Number(order.total || 0).toFixed(2)}</span>
+            </div>
+        </div>
+        
+        <div class="payment-info">
+            <div class="info-row">
+                <span class="info-label">Payment Status:</span>
+                <span class="info-value">
+                    <span class="payment-status ${statusClass}">${paymentStatus}</span>
+                </span>
+            </div>
+            ${order.payment?.reference ? `
+            <div class="info-row">
+                <span class="info-label">Payment Ref:</span>
+                <span class="info-value" style="font-size: 10px;">${order.payment.reference}</span>
+            </div>
+            ` : ''}
+            <div class="info-row">
+                <span class="info-label">Order Status:</span>
+                <span class="info-value">
+                    <span class="order-status" style="background: #3498db; color: white;">${order.status || 'new'}</span>
+                </span>
+            </div>
+        </div>
+        
+        <div class="thank-you">
+            Thank you for your order!
+        </div>
+        
+        <div class="footer">
+            <div>For inquiries, contact us</div>
+            <div style="margin-top: 5px;">${order.customer?.phone || ''}</div>
+        </div>
+    </div>
+        `;
+    }).join('')}
+</body>
+</html>`;
+        
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Disposition', `attachment; filename="orders-receipts-${new Date().toISOString().split('T')[0]}.html"`);
+        res.send(receiptHTML);
+    } catch (error) {
+        console.error('Error downloading orders:', error);
+        res.status(500).json({ message: 'Failed to download orders', error: error.message });
     }
 });
 
@@ -765,7 +1204,7 @@ app.get('/api/admin/products', requireAdmin, async(req, res) => {
 // Create a new product
 app.post('/api/products', requireAdmin, upload.single('image'), async(req, res) => {
     try {
-        const { name, price, category, description, stock } = req.body;
+        const { name, price, oldPrice, category, description, stock, sizes } = req.body;
 
         // Validate required fields
         if (!name || !price || !category) {
@@ -788,14 +1227,18 @@ app.post('/api/products', requireAdmin, upload.single('image'), async(req, res) 
             publicId = req.file.filename;
         }
 
+        const parsedSizesCreate = parseSizesField(sizes);
+        console.log('Create product sizes raw:', sizes, 'parsed:', parsedSizesCreate);
         const newProduct = new Product({
             name,
             price: parseFloat(price),
+            oldPrice: oldPrice !== undefined && oldPrice !== null && String(oldPrice).trim() !== '' ? parseFloat(oldPrice) : undefined,
             category,
             description: description || '',
             stock: stockQuantity,
             imageUrl,
-            publicId
+            publicId,
+            sizes: parsedSizesCreate
         });
 
         const savedProduct = await newProduct.save();
@@ -817,7 +1260,7 @@ app.post('/api/products', requireAdmin, upload.single('image'), async(req, res) 
 // Update a product
 app.put('/api/products/:id', requireAdmin, upload.single('image'), async(req, res) => {
     try {
-        const { name, price, category, description, stock } = req.body;
+        const { name, price, oldPrice, category, description, stock } = req.body;
         const product = await Product.findById(req.params.id);
 
         if (!product) {
@@ -836,6 +1279,19 @@ app.put('/api/products/:id', requireAdmin, upload.single('image'), async(req, re
             category,
             description: description || ''
         };
+        if (typeof oldPrice !== 'undefined') {
+            const parsedOld = String(oldPrice).trim() === '' ? undefined : parseFloat(oldPrice);
+            updateData.oldPrice = isNaN(parsedOld) ? undefined : parsedOld;
+        }
+        // Parse sizes if provided; only update when there are valid values
+        if (typeof req.body.sizes !== 'undefined') {
+            const parsedSizesUpdate = parseSizesField(req.body.sizes);
+            console.log('Update product sizes raw:', req.body.sizes, 'parsed:', parsedSizesUpdate);
+            if (Array.isArray(parsedSizesUpdate) && parsedSizesUpdate.length > 0) {
+                updateData.sizes = parsedSizesUpdate;
+            }
+            // If empty/invalid, do NOT touch existing sizes to avoid wiping them
+        }
 
         // Only update stock if provided
         if (stockQuantity !== undefined) {
