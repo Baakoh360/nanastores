@@ -3,11 +3,28 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NANA BAAKO STORES</title>
-    <meta name="description" content="Shop quality books, pens, notebooks, and school supplies at In His Time Book & Stationery Shop. Trusted by students and parents in Ghana.">
-    <meta name="keywords" content="books, stationery, Ghana bookshop, pens, notebooks, school supplies, affordable books, Accra stationery shop">
-    <meta name="author" content="In His Time Bookshop">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Nana Stores | Nana Baako Stores – Premium Collection, Fast Delivery</title>
+    <meta name="description" content="Nana Baako Stores – Shop shoes, essentials, fashion and accessories with fast delivery in Ghana. Quality products, great prices.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://nanastores.onrender.com/">
+    <meta name="author" content="Nana Baako Stores">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Nana Baako Stores – Premium Collection, Fast Delivery">
+    <meta property="og:description" content="Shop shoes, essentials, fashion and accessories with fast delivery in Ghana.">
+    <meta property="og:url" content="https://nanastores.onrender.com/">
+    <meta property="og:image" content="https://nanastores.onrender.com/images/qwerrt.png">
+    <meta property="og:site_name" content="Nana Baako Stores">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nana Baako Stores – Premium Collection, Fast Delivery">
+    <meta name="twitter:description" content="Shop shoes, essentials, fashion and accessories with fast delivery in Ghana.">
+    <meta name="twitter:image" content="https://nanastores.onrender.com/images/qwerrt.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -437,7 +454,8 @@
 .product-image img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     transition: transform 0.4s ease, filter 0.3s ease;
     filter: brightness(1.05) contrast(1.05);
 }
@@ -953,12 +971,351 @@
             }
         }
         
-        @media only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) {
-            .hero {
-                min-height: calc(100vh - 60px);
+        /* Mobile Responsive Styles - iPhone & Android */
+        @media (max-width: 767px) {
+            /* iOS specific fixes */
+            * {
+                -webkit-tap-highlight-color: rgba(0,0,0,0);
+                -webkit-touch-callout: none;
             }
+            
+            body {
+                -webkit-text-size-adjust: 100%;
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
+                width: 100%;
+            }
+            
+            .container {
+                padding: 0 1rem;
+                max-width: 100%;
+            }
+            
+            /* Header fixes for mobile */
+            header {
+                height: 60px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+            }
+            
+            .header-content {
+                padding: 0 1rem;
+                height: 60px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+            nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            nav ul {
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            nav a {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.7rem;
+                min-height: 36px;
+                display: flex;
+                align-items: center;
+            }
+            
+            /* Hero section mobile fixes */
+            .hero {
+                min-height: 300px;
+                margin-top: 60px;
+                padding-top: 20px;
+                width: 100%;
+                overflow: hidden;
+            }
+            
+            .hero-content {
+                padding: 1rem;
+                height: auto;
+                min-height: 250px;
+            }
+            
+            .hero-title {
+                font-size: 1.8rem;
+                line-height: 1.2;
+                margin-bottom: 0.75rem;
+                padding: 0 0.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 1.5rem;
+                padding: 0 0.5rem;
+            }
+            
+            .hero-cta {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+                min-height: 44px; /* Touch-friendly */
+            }
+            
+            /* Products section mobile */
+            .products {
+                padding: 2rem 0;
+                width: 100%;
+            }
+            
+            .section-header {
+                padding: 0 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .section-subtitle {
+                font-size: 0.9rem;
+                padding: 0;
+            }
+            
+            /* Product grid mobile - 2 columns */
             .product-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                padding: 0 0.75rem;
+                margin-top: 1.5rem;
+            }
+            
+            .product-card {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            .product-image {
+                height: 140px;
+                width: 100%;
+                padding: 0.5rem;
+            }
+            
+            .product-image img {
+                object-fit: cover;
+                object-position: center;
+            }
+            
+            .product-info {
+                padding: 0.75rem;
+            }
+            
+            .product-name {
+                font-size: 0.9rem;
+                line-height: 1.3;
+                margin-bottom: 0.5rem;
+            }
+            
+            .product-price {
+                font-size: 1.1rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .add-to-cart-btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.85rem;
+                min-height: 44px; /* Touch-friendly */
+                width: 100%;
+            }
+            
+            /* Filter buttons mobile */
+            .filter-container {
+                padding: 0 0.5rem;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+                flex-wrap: wrap;
+            }
+            
+            .filter-btn {
+                padding: 0.6rem 0.9rem;
+                font-size: 0.8rem;
+                min-height: 40px; /* Touch-friendly */
+            }
+            
+            /* Contact section mobile */
+            .contact {
+                padding: 2rem 0;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+                padding: 0 1rem;
+            }
+            
+            .contact-card {
+                padding: 1.25rem;
+            }
+            
+            /* Footer mobile */
+            footer {
+                padding: 2rem 0 1.5rem;
+            }
+            
+            .footer-social {
+                gap: 0.75rem;
+            }
+            
+            .footer-social a {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            /* Search toggle mobile */
+            .search-wrap {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .search-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 1.1rem;
+            }
+            
+            /* Modal fixes for mobile */
+            .modal {
+                padding: 0.5rem;
+            }
+            
+            .modal-content {
+                max-height: 90vh;
+            }
+            
+            .modal-close {
+                top: 1rem;
+                right: 1rem;
+                width: 36px;
+                height: 36px;
+                font-size: 1.3rem;
+            }
+            
+            /* Cart modal mobile */
+            .cart-content {
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            
+            /* Quantity modal mobile */
+            .quantity-modal-content {
+                margin: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+            
+            .quantity-modal-header,
+            .quantity-modal-body,
+            .quantity-modal-footer {
+                padding: 1rem;
+            }
+            
+            .quantity-input {
+                font-size: 1.1rem;
+                padding: 12px;
+            }
+            
+            .quantity-add-btn {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 48px; /* Touch-friendly */
+            }
+        }
+        
+        /* iPhone specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            /* iOS Safari specific */
+            body {
+                -webkit-overflow-scrolling: touch;
+                /* Safe area support for iPhone X and newer */
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            header {
+                padding-top: env(safe-area-inset-top);
+            }
+            
+            .hero {
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+            }
+            
+            .product-card {
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
+                will-change: transform;
+            }
+            
+            /* Fix for iOS input zoom */
+            input[type="text"],
+            input[type="number"],
+            input[type="email"],
+            input[type="tel"],
+            textarea,
+            select {
+                font-size: 16px !important; /* Prevents zoom on focus in iOS */
+            }
+            
+            /* Prevent text selection issues on iOS */
+            .product-card,
+            .filter-btn,
+            .add-to-cart-btn {
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+            /* Smooth scrolling for iOS */
+            html {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        /* Small mobile devices (iPhone SE, etc.) */
+        @media (max-width: 375px) {
+            .hero-title {
+                font-size: 1.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .product-grid {
+                gap: 0.75rem;
+                padding: 0 0.5rem;
+            }
+            
+            .product-image {
+                height: 120px;
+                padding: 0.4rem;
+            }
+            
+            .product-image img {
+                object-fit: cover;
+                object-position: center;
+            }
+            
+            .product-name {
+                font-size: 0.85rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
             }
         }
         
@@ -1800,11 +2157,8 @@
             background: rgba(255,255,255,0.08);
         }
         
-        .product-image img {
-            width: 100%;
-            height: 200px;
-            object-fit: contain;
-        }
+        .product-image { position: relative; width: 100%; height: 200px; background: transparent; margin: 0; padding: 0; }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; border: 0; }
 
         .product-image::before {
             content: '';
@@ -2062,6 +2416,13 @@
             background-color: #bdc3c7;
             cursor: not-allowed;
         }
+        /* Ensure cancel button text is visible */
+        .btn-cancel {
+            color: #111 !important;
+            background: #ffffff !important;
+            border: 1px solid #e1e8ed !important;
+            font-weight: 700;
+        }
         
         .error-message {
             color: #e74c3c;
@@ -2289,6 +2650,32 @@
 </head>
 
 <body>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Nana Baako Stores",
+      "url": "https://nanastores.onrender.com/",
+      "logo": "https://nanastores.onrender.com/images/qwerrt.png",
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Nana Baako Stores",
+      "url": "https://nanastores.onrender.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://nanastores.onrender.com/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
     <header id="header">
         <div class="container">
            
@@ -2360,36 +2747,7 @@
         </div>
     </section>
 
-    <!-- Quantity Selection Modal -->
-    <div class="quantity-modal" id="quantity-modal">
-        <div class="quantity-modal-content">
-            <div class="quantity-modal-header">
-                <h3>Select Quantity</h3>
-                <button class="quantity-modal-close" onclick="closeQuantityModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="quantity-modal-body">
-                <div class="quantity-modal-product">
-                    <img id="quantity-modal-image" src="" alt="Product">
-                    <div>
-                        <h4 id="quantity-modal-name"></h4>
-                        <p class="quantity-modal-price" id="quantity-modal-price"></p>
-                    </div>
-                </div>
-                <div class="quantity-modal-controls">
-                    <button class="quantity-btn-modal" onclick="changeQuantityModal(-1)">-</button>
-                    <input type="number" id="quantity-modal-input" value="1" min="1" max="99" readonly>
-                    <button class="quantity-btn-modal" onclick="changeQuantityModal(1)">+</button>
-                </div>
-            </div>
-            <div class="quantity-modal-footer">
-                <button class="quantity-add-btn" onclick="confirmAddToCart()">
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                </button>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Cart Modal -->
     <div class="cart-modal" id="cart-modal">
@@ -2494,7 +2852,7 @@
                     <i class="fas fa-store"></i> NANA BAAKO STORES
                 </div>
                 <div class="footer-text">
-                    Your trusted hub for knowledge and inspiration.
+                    Where smart shopping meets great style.
                 </div>
                 <div class="footer-social">
                     <a href="https://wa.me/+233505553357" target="_blank" title="WhatsApp">
@@ -2517,9 +2875,64 @@
     <div id="image-modal" class="modal">
         <div class="modal-content">
             <div class="modal-close">&times;</div>
-            <img id="modal-image" src="" alt="Product Image">
+            <div class="modal-card">
+                <img id="modal-image" src="" alt="Product Image">
+                <div class="modal-body">
+                    <h3 id="modal-title" class="modal-title"></h3>
+                    <div id="modal-description" class="modal-description"></div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Add to Cart / Quantity Modal with Size Selection -->
+    <div id="quantity-modal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:520px; width:92%;">
+            <div class="modal-close" onclick="closeQuantityModal()">&times;</div>
+            <div class="modal-card" style="background:#fff; border-radius:14px; overflow:hidden; border:1px solid rgba(0,0,0,.08); box-shadow:0 12px 32px rgba(0,0,0,.2);">
+                <img id="quantity-modal-image" src="" alt="Product" style="width:100%; max-height:260px; object-fit:contain; background:#f8f9fb;">
+                <div class="modal-body" style="padding:16px 18px;">
+                    <h3 id="quantity-modal-name" style="margin:0 0 4px 0; font-size:1.05rem; font-weight:800;"></h3>
+                    <div id="quantity-modal-price" style="color:#111; font-weight:700; margin-bottom:12px;"></div>
+                    <div id="size-section" style="display:none; margin-bottom:12px;">
+                        <label for="size-input" style="display:block; margin-bottom:6px; font-weight:600; font-size:14px;">Select Size</label>
+                        <select id="size-input" style="width:100%; padding:10px 12px; border:1px solid #e1e8ed; border-radius:8px; background:#fff;"></select>
+                        <div id="size-hint" style="margin-top:6px; color:#6c757d; font-size:12px;"></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                        <button onclick="changeQuantityModal(-1)" class="quantity-btn" style="padding:8px 12px;">-</button>
+                        <input id="quantity-modal-input" type="number" value="1" min="1" max="99" style="width:70px; text-align:center; padding:8px 6px; border:1px solid #e1e8ed; border-radius:8px;" />
+                        <button onclick="changeQuantityModal(1)" class="quantity-btn" style="padding:8px 12px;">+</button>
+                    </div>
+                    <div class="form-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                        <button class="btn-cancel" onclick="closeQuantityModal()" style="padding:10px 14px; border:1px solid #e1e8ed; border-radius:8px; background:#fff;">Cancel</button>
+                        <button class="btn-proceed" onclick="confirmAddToCart()" style="padding:10px 14px; border-radius:8px; background:#111; color:#fff; font-weight:700;">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-content { max-width: 820px; width: 92%; }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,.25);
+            border: 1px solid rgba(0,0,0,.08);
+        }
+        .modal-card img#modal-image {
+            display: block;
+            width: 100%;
+            max-height: 420px;
+            object-fit: contain;
+            background: #f8f9fb;
+        }
+        .modal-body { padding: 16px 18px; }
+        .modal-title { margin: 0 0 8px 0; font-size: 1.05rem; font-weight: 800; color: #111; }
+        .modal-description { color: #333; font-size: .95rem; line-height: 1.55; white-space: pre-wrap; }
+    </style>
 
 
 
@@ -2683,7 +3096,10 @@
                     </div>
                     <div class="product-info">
                         <h3 class="product-name">${product.name}</h3>
-                        <div class="product-price">GH₵${product.price.toFixed(2)}</div>
+                        <div class="product-price">
+                            ${typeof product.oldPrice === 'number' && product.oldPrice > product.price ? `<span style="text-decoration:line-through; color:#888; margin-right:8px;">GH₵${product.oldPrice.toFixed(2)}</span>` : ''}
+                            <span style="font-weight:800; color:#111;">GH₵${product.price.toFixed(2)}</span>
+                        </div>
                         <button class="add-to-cart-btn" onclick="showQuantityModal('${product.id}')" data-product-id="${product.id}">
                             <i class="fas fa-shopping-cart"></i> Add to Cart
                         </button>
@@ -2696,7 +3112,7 @@
                     // Add click event to the product image
                     const productImage = productCard.querySelector('.product-image img');
                     productImage.addEventListener('click', function() {
-                        openImageModal(this.src);
+                        openImageModal(product);
                     });
                 });
 
@@ -2707,17 +3123,22 @@
                 })));
             }
 
-            // Open image modal with proper sizing
-            function openImageModal(imageSrc) {
+            // Open image modal with proper sizing and description
+            function openImageModal(product) {
                 const modal = document.getElementById('image-modal');
                 const modalImg = document.getElementById('modal-image');
+                const modalDesc = document.getElementById('modal-description');
+                const modalTitle = document.getElementById('modal-title');
 
                 modal.style.display = 'flex';
-                modalImg.src = imageSrc;
+                modalImg.src = product.imageUrl;
+                modalImg.onerror = function() { this.src = 'https://via.placeholder.com/300x300?text=Product+Image'; };
+                modalTitle.textContent = product.name || '';
+                modalDesc.textContent = product.description || 'No description available.';
                 document.body.style.overflow = 'hidden';
 
-                modalImg.style.maxWidth = '90%';
-                modalImg.style.maxHeight = '90%';
+                modalImg.style.maxWidth = '100%';
+                modalImg.style.maxHeight = '420px';
                 modalImg.style.objectFit = 'contain';
             }
 
@@ -2824,6 +3245,76 @@
             }
         });
 
+        // Safely parse available sizes from a description string.
+        // Supports formats like: "Sizes: 38, 39, 40", "Available 40-43", or embedded numbers.
+        function parseAvailableSizes(description) {
+            try {
+                if (!description || typeof description !== 'string') return [];
+                const text = description.toLowerCase();
+
+                // Try range first (e.g., 38-41 or 38 to 41)
+                const rangeMatch = text.match(/(\d{1,3})\s*(?:-|–|—|to)\s*(\d{1,3})/);
+                if (rangeMatch) {
+                    const start = parseInt(rangeMatch[1], 10);
+                    const end = parseInt(rangeMatch[2], 10);
+                    if (!isNaN(start) && !isNaN(end) && end >= start) {
+                        const out = [];
+                        for (let s = start; s <= end; s++) out.push(s);
+                        return out;
+                    }
+                }
+
+                // Fallback: collect all standalone numbers (e.g., "38, 39 40")
+                const nums = (text.match(/\b\d{1,3}\b/g) || [])
+                    .map(n => parseInt(n, 10))
+                    .filter(n => !isNaN(n));
+                // Deduplicate while preserving order
+                const seen = new Set();
+                const unique = [];
+                for (const n of nums) {
+                    if (!seen.has(n)) { seen.add(n); unique.push(n); }
+                }
+                return unique;
+            } catch (e) {
+                return [];
+            }
+        }
+
+        // Parse color from description (client-side mirror of server logic)
+        function parseColorFromDescription(description) {
+            try {
+                if (!description || typeof description !== 'string') return null;
+                const text = description.toLowerCase();
+
+                // Labeled forms like: "Color: blue", "Colour - wine red", "color=black/white"
+                const labelMatch = text.match(/colou?r\s*(?:[:\-=]?\s*)([a-z\s\/&+]+)/i);
+                if (labelMatch && labelMatch[1]) {
+                    const raw = labelMatch[1].trim();
+                    const cleaned = raw.split(/[\.|,|;|\n|\(|\)|\[|\]|\||\*]/)[0].trim();
+                    if (cleaned) {
+                        const primary = cleaned.split(/[\/|&+]/)[0].trim();
+                        return primary ? primary.replace(/\b\w/g, c => c.toUpperCase()) : null;
+                    }
+                }
+
+                // Fallback: known colors anywhere
+                const COLORS = [
+                    'black','white','red','blue','green','yellow','orange','purple','pink','brown','grey','gray',
+                    'navy','navy blue','sky blue','light blue','dark blue','maroon','beige','cream','gold','silver',
+                    'teal','turquoise','magenta','violet','indigo','burgundy','khaki','olive'
+                ];
+                for (const c of COLORS.sort((a,b)=>b.length-a.length)) {
+                    const re = new RegExp(`\\b${c.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                    if (re.test(text)) {
+                        return c.replace(/\b\w/g, x => x.toUpperCase());
+                    }
+                }
+                return null;
+            } catch (e) {
+                return null;
+            }
+        }
+
         // Global cart functions - Quantity Modal
         let currentModalProductId = null;
 
@@ -2837,17 +3328,80 @@
             }
 
             currentModalProductId = productId;
-            const modal = document.getElementById('quantity-modal');
+            let modal = document.getElementById('quantity-modal');
+            if (!modal) {
+                // Inject minimal modal if missing
+                const temp = document.createElement('div');
+                temp.innerHTML = `
+                <div id="quantity-modal" class="modal" style="display:none;">
+                    <div class="modal-content" style="max-width:520px; width:92%;">
+                        <div class="modal-close" onclick="closeQuantityModal()">&times;</div>
+                        <div class="modal-card" style="background:#fff; border-radius:14px; overflow:hidden; border:1px solid rgba(0,0,0,.08); box-shadow:0 12px 32px rgba(0,0,0,.2);">
+                            <img id="quantity-modal-image" src="" alt="Product" style="width:100%; max-height:260px; object-fit:contain; background:#f8f9fb;">
+                            <div class="modal-body" style="padding:16px 18px;">
+                                <h3 id="quantity-modal-name" style="margin:0 0 4px 0; font-size:1.05rem; font-weight:800;"></h3>
+                                <div id="quantity-modal-price" style="color:#111; font-weight:700; margin-bottom:12px;"></div>
+                                <div id="size-section" style="display:none; margin-bottom:12px;">
+                                    <label for="size-input" style="display:block; margin-bottom:6px; font-weight:600; font-size:14px;">Select Size</label>
+                                    <select id="size-input" style="width:100%; padding:10px 12px; border:1px solid #e1e8ed; border-radius:8px; background:#fff;"></select>
+                                    <div id="size-hint" style="margin-top:6px; color:#6c757d; font-size:12px;"></div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                                    <button onclick="changeQuantityModal(-1)" class="quantity-btn" style="padding:8px 12px;">-</button>
+                                    <input id="quantity-modal-input" type="number" value="1" min="1" max="99" style="width:70px; text-align:center; padding:8px 6px; border:1px solid #e1e8ed; border-radius:8px;" />
+                                    <button onclick="changeQuantityModal(1)" class="quantity-btn" style="padding:8px 12px;">+</button>
+                                </div>
+                                <div class="form-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                                    <button class="btn-cancel" onclick="closeQuantityModal()" style="padding:10px 14px; border:1px solid #e1e8ed; border-radius:8px; background:#fff;">Cancel</button>
+                                    <button class="btn-proceed" onclick="confirmAddToCart()" style="padding:10px 14px; border-radius:8px; background:#111; color:#fff; font-weight:700;">Add to Cart</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                document.body.appendChild(temp.firstElementChild);
+                modal = document.getElementById('quantity-modal');
+            }
+
             const modalImg = document.getElementById('quantity-modal-image');
             const modalName = document.getElementById('quantity-modal-name');
             const modalPrice = document.getElementById('quantity-modal-price');
             const modalInput = document.getElementById('quantity-modal-input');
+            const sizeSection = document.getElementById('size-section');
+            const sizeInput = document.getElementById('size-input');
+            const sizeHint = document.getElementById('size-hint');
 
             modalImg.src = product.imageUrl;
             modalImg.onerror = function() { this.src = 'https://via.placeholder.com/300x300?text=Product+Image'; };
             modalName.textContent = product.name;
             modalPrice.textContent = `GH₵${product.price.toFixed(2)}`;
             modalInput.value = 1;
+
+            // Build sizes from description
+            if (typeof parseAvailableSizes === 'function' && sizeSection && sizeInput && sizeHint) {
+                const sizesFromDesc = parseAvailableSizes(product.description);
+                if (sizesFromDesc.length > 0) {
+                    sizeSection.style.display = 'block';
+                    sizeInput.innerHTML = '';
+                    const placeholderOpt = document.createElement('option');
+                    placeholderOpt.value = '';
+                    placeholderOpt.textContent = 'Select size';
+                    placeholderOpt.disabled = true;
+                    placeholderOpt.selected = true;
+                    sizeInput.appendChild(placeholderOpt);
+                    sizesFromDesc.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = String(s);
+                        opt.textContent = String(s);
+                        sizeInput.appendChild(opt);
+                    });
+                    sizeHint.textContent = `Available sizes: ${sizesFromDesc.join(', ')}`;
+                } else {
+                    sizeSection.style.display = 'none';
+                    sizeInput.innerHTML = '';
+                    sizeHint.textContent = '';
+                }
+            }
 
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
@@ -2881,6 +3435,23 @@
                 return;
             }
 
+            // Require valid size if sizes are in description
+            let selectedSize = null;
+            const sizesCheck = parseAvailableSizes(product.description);
+            if (sizesCheck.length > 0) {
+                const sizeInputEl = document.getElementById('size-input');
+                if (!sizeInputEl || !sizeInputEl.value) {
+                    alert('Please select a size');
+                    return;
+                }
+                const sizeNum = parseInt(sizeInputEl.value, 10);
+                if (isNaN(sizeNum) || !sizesCheck.includes(sizeNum)) {
+                    alert('Size unavailable');
+                    return;
+                }
+                selectedSize = sizeNum;
+            }
+
             const quantityInput = document.getElementById('quantity-modal-input');
             const quantity = parseInt(quantityInput.value) || 1;
 
@@ -2889,7 +3460,7 @@
                 return;
             }
 
-            const existingItem = cart.find(item => String(item.id) === productId);
+            const existingItem = cart.find(item => String(item.id) === productId && String(item.size || '') === String(selectedSize || ''));
 
             if (existingItem) {
                 existingItem.quantity += quantity;
@@ -2899,7 +3470,9 @@
                     name: product.name,
                     price: product.price,
                     imageUrl: product.imageUrl,
-                    quantity: quantity
+                    quantity: quantity,
+                    size: selectedSize,
+                    color: parseColorFromDescription(product.description) || null
                 });
             }
 
@@ -2934,10 +3507,11 @@
             }
         });
 
-        function removeFromCart(productId) {
+        function removeFromCart(productId, size) {
             // Ensure productId is a string for consistency
             productId = String(productId);
-            cart = cart.filter(item => String(item.id) !== productId);
+            const sizeKey = typeof size === 'undefined' || size === null ? '' : String(size);
+            cart = cart.filter(item => !(String(item.id) === productId && String(item.size || '') === sizeKey));
             updateCartDisplay();
         }
 
@@ -2990,12 +3564,13 @@
                     onerror="this.src='https://via.placeholder.com/300x300?text=Product+Image'">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${item.name}</div>
+                    ${item.size ? `<div class="cart-item-size">Size: ${item.size}</div>` : ''}
                     <div class="cart-item-price">GH₵${item.price.toFixed(2)}</div>
                     <div class="cart-item-quantity">
-                        <button class="quantity-btn" onclick="updateCartItemQuantity('${item.id}', -1)">-</button>
+                        <button class="quantity-btn" onclick="updateCartItemQuantity('${item.id}', ${JSON.stringify(item.size ?? null)}, -1)">-</button>
                         <span>${item.quantity}</span>
-                        <button class="quantity-btn" onclick="updateCartItemQuantity('${item.id}', 1)">+</button>
-                        <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">
+                        <button class="quantity-btn" onclick="updateCartItemQuantity('${item.id}', ${JSON.stringify(item.size ?? null)}, 1)">+</button>
+                        <button class="cart-item-remove" onclick="removeFromCart('${item.id}', ${JSON.stringify(item.size ?? null)})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -3025,16 +3600,17 @@
             `;
         }
 
-        function updateCartItemQuantity(productId, change) {
+        function updateCartItemQuantity(productId, size, change) {
             // Ensure productId is a string for consistency
             productId = String(productId);
-            const item = cart.find(item => String(item.id) === productId);
+            const sizeKey = typeof size === 'undefined' || size === null ? '' : String(size);
+            const item = cart.find(item => String(item.id) === productId && String(item.size || '') === sizeKey);
             if (!item) return;
 
             item.quantity += change;
 
             if (item.quantity <= 0) {
-                removeFromCart(productId);
+                removeFromCart(productId, size);
             } else {
                 updateCartDisplay();
             }
@@ -3202,7 +3778,9 @@
                 },
                 items: cart.map(item => ({
                     id: String(item.id),
-                    quantity: parseInt(item.quantity) || 1
+                    quantity: parseInt(item.quantity) || 1,
+                    size: item.size || null,
+                    color: item.color || null
                 }))
             };
 
