@@ -1233,6 +1233,28 @@
                         return;
                     }
                     
+                    // Build fallback color map if needed
+                    const missingColorProductIds = new Set();
+                    (order.items || []).forEach(i => {
+                        if (!i.color && i.productId) missingColorProductIds.add(String(i.productId));
+                    });
+                    
+                    let productIdToDerivedColor = {};
+                    if (missingColorProductIds.size > 0) {
+                        try {
+                            const productsResp = await fetch(`${API_BASE_URL}/admin/products`, { credentials: 'include' });
+                            if (productsResp.ok) {
+                                const allProducts = await productsResp.json();
+                                allProducts.forEach(p => {
+                                    if (missingColorProductIds.has(String(p._id))) {
+                                        const derived = parseColorFromDescription(p.description || '');
+                                        if (derived) productIdToDerivedColor[String(p._id)] = derived;
+                                    }
+                                });
+                            }
+                        } catch (e) { /* ignore fallback errors */ }
+                    }
+                    
                     const itemsList = order.items.map(i => {
                         const fallbackColor = i.color || productIdToDerivedColor[String(i.productId)] || '';
                         return `
