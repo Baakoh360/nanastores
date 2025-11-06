@@ -666,7 +666,7 @@
                     <button><i class="fas fa-search"></i></button>
                 </div>
                 <div class="admin-profile">
-                    <span>In His Time Manager</span>
+                    <span>NANA BAAKO STORES</span>
                     <img src="12.jpeg" alt="Admin">
                 </div>
             </header>
@@ -723,6 +723,7 @@
                                 <th>Price</th>
                                 <th>Category</th>
                                 <th>Stock</th>
+                                <th>Sizes</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -739,9 +740,14 @@
             <section id="orders" class="orders-section" style="display:none;">
                 <div class="section-header">
                     <h2>Orders</h2>
-                    <button class="refresh-btn" onclick="fetchOrders()">
-                        <i class="fas fa-sync-alt"></i> Refresh Orders
-                    </button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="refresh-btn" onclick="downloadOrders()" style="background:#27ae60;">
+                            <i class="fas fa-download"></i> Download Orders
+                        </button>
+                        <button class="refresh-btn" onclick="fetchOrders()">
+                            <i class="fas fa-sync-alt"></i> Refresh Orders
+                        </button>
+                    </div>
                 </div>
                 <div class="orders-table-container">
                     <table class="orders-table">
@@ -787,6 +793,10 @@
                         <input type="number" id="product-price" step="0.01" min="0" required>
                     </div>
                     <div class="form-group">
+                        <label for="product-old-price">Old Price (GH₵) <small style="color:#6c757d; font-weight:400;">(optional, shown struck-through)</small></label>
+                        <input type="number" id="product-old-price" step="0.01" min="0" placeholder="e.g. 199.99">
+                    </div>
+                    <div class="form-group">
                         <label for="product-category">Category</label>
                         <select id="product-category" required>
                             <option value="">Select Category</option>
@@ -801,6 +811,11 @@
                     <div class="form-group">
                         <label for="product-description">Description</label>
                         <textarea id="product-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-sizes">Sizes (optional)</label>
+                        <input type="text" id="product-sizes" placeholder="e.g. 40, 41, 42 or 38-41 or 38 to 41">
+                        <small style="color: #6c757d; font-size: 12px;">Enter sizes separated by commas/spaces or ranges like 38-41 or 38 to 41. Leave empty if not applicable.</small>
                     </div>
                     <div class="form-group">
                         <label for="product-stock">Stock Quantity *</label>
@@ -1029,6 +1044,33 @@
                 }
             }
 
+            // Parse color from a description string (mirrors server-side)
+            function parseColorFromDescription(desc) {
+                try {
+                    if (!desc || typeof desc !== 'string') return null;
+                    const text = desc.toLowerCase();
+                    const labelMatch = text.match(/colou?r\s*(?:[:\-=]?\s*)([a-z0-9\-\s\/&+]+)/i);
+                    if (labelMatch && labelMatch[1]) {
+                        const raw = labelMatch[1].trim();
+                        const cleaned = raw.split(/\.|,|;|\n|\(|\)|\[|\]|\||\*|\bsize\b|\bquantity\b|\bqty\b/i)[0].trim();
+                        if (cleaned) {
+                            const primary = cleaned.split(/[\/|&+]/)[0].trim();
+                            return primary ? primary.replace(/\b\w/g, c => c.toUpperCase()) : null;
+                        }
+                    }
+                    const COLORS = [
+                        'black','white','red','blue','green','yellow','orange','purple','pink','brown','grey','gray',
+                        'navy','navy blue','sky blue','light blue','dark blue','maroon','beige','cream','gold','silver',
+                        'teal','turquoise','magenta','violet','indigo','burgundy','khaki','olive'
+                    ];
+                    for (const c of COLORS.sort((a,b)=>b.length-a.length)) {
+                        const re = new RegExp(`\\b${c.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                        if (re.test(text)) return c.replace(/\b\w/g, x => x.toUpperCase());
+                    }
+                    return null;
+                } catch { return null; }
+            }
+
             async function fetchOrders() {
                 const ordersBody = document.getElementById('orders-table-body');
                 try {
@@ -1064,6 +1106,30 @@
                     console.log('Number of orders:', orders.length);
                     
                     ordersBody.innerHTML = '';
+
+                    // Build a fallback color map for items missing color, by looking up products
+                    const missingColorProductIds = new Set();
+                    orders.forEach(o => {
+                        (o.items || []).forEach(i => {
+                            if (!i.color && i.productId) missingColorProductIds.add(String(i.productId));
+                        });
+                    });
+
+                    let productIdToDerivedColor = {};
+                    if (missingColorProductIds.size > 0) {
+                        try {
+                            const productsResp = await fetch(`${API_BASE_URL}/admin/products`, { credentials: 'include' });
+                            if (productsResp.ok) {
+                                const allProducts = await productsResp.json();
+                                allProducts.forEach(p => {
+                                    if (missingColorProductIds.has(String(p._id))) {
+                                        const derived = parseColorFromDescription(p.description || '');
+                                        if (derived) productIdToDerivedColor[String(p._id)] = derived;
+                                    }
+                                });
+                            }
+                        } catch (e) { /* ignore fallback errors */ }
+                    }
                     if (orders.length === 0) {
                         ordersBody.innerHTML = '<tr><td colspan="10" class="loading-text">No orders yet. Orders will appear here after customers make purchases.</td></tr>';
                         return;
@@ -1074,7 +1140,10 @@
                     
                     orders.forEach((o, index) => {
                         console.log(`Processing order ${index + 1}:`, o);
-                        const itemsText = o.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+                        const itemsText = o.items.map(i => {
+                            const fallbackColor = i.color || productIdToDerivedColor[String(i.productId)] || '';
+                            return `${i.name}${i.size ? ' [size ' + i.size + ']' : ''}${fallbackColor ? ' [' + fallbackColor + ']' : ''} (x${i.quantity})`;
+                        }).join(', ');
                         const orderDate = new Date(o.createdAt);
                         const dateStr = orderDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                         const timeStr = orderDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -1129,9 +1198,14 @@
                                 </div>
                             </td>
                             <td>
-                                <button onclick="showFullOrderDetails('${o._id}')" style="padding:6px 14px; background:#1971c2; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">
-                                    View Full
-                                </button>
+                                <div style="display:flex; gap:6px; flex-direction:column;">
+                                    <button onclick="showFullOrderDetails('${o._id}')" style="padding:6px 14px; background:#1971c2; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">
+                                        View Full
+                                    </button>
+                                    <button onclick="deleteOrder('${o._id}')" style="padding:6px 14px; background:#dc3545; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
                             </td>
                         `;
                         ordersBody.appendChild(tr);
@@ -1159,12 +1233,14 @@
                         return;
                     }
                     
-                    const itemsList = order.items.map(i => 
-                        `<div style="padding:8px; margin:4px 0; background:#f8f9fa; border-radius:4px;">
-                            <strong>${i.name}</strong><br>
+                    const itemsList = order.items.map(i => {
+                        const fallbackColor = i.color || productIdToDerivedColor[String(i.productId)] || '';
+                        return `
+                        <div style="padding:8px; margin:4px 0; background:#f8f9fa; border-radius:4px;">
+                            <strong>${i.name}</strong>${i.size ? ` <span style=\"color:#6c757d;\">[size ${i.size}]</span>` : ''}${fallbackColor ? ` <span style=\"color:#6c757d;\">[${fallbackColor}]</span>` : ''}<br>
                             Quantity: ${i.quantity} | Price: GH₵${i.price.toFixed(2)} | Subtotal: GH₵${(i.price * i.quantity).toFixed(2)}
-                        </div>`
-                    ).join('');
+                        </div>`;
+                    }).join('');
                     
                     const modalContent = `
                         <div style="background:white; padding:30px; border-radius:10px; max-width:600px; max-height:90vh; overflow-y:auto;">
@@ -1243,10 +1319,84 @@
                 }
             }
             
+            // Delete order
+            async function deleteOrder(orderId) {
+                if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+                    return;
+                }
+                
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    
+                    if (!resp.ok) {
+                        const error = await resp.json();
+                        throw new Error(error.message || 'Failed to delete order');
+                    }
+                    
+                    // Refresh orders list
+                    fetchOrders();
+                    alert('Order deleted successfully!');
+                } catch (e) {
+                    console.error(e);
+                    alert('Failed to delete order: ' + e.message);
+                }
+            }
+            
+            // Download orders as formatted receipts (HTML)
+            async function downloadOrders() {
+                try {
+                    const resp = await fetch(`${API_BASE_URL}/admin/orders/download`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!resp.ok) {
+                        if (resp.status === 401) {
+                            await ensureAdminSession();
+                            return downloadOrders(); // Retry after login
+                        }
+                        const error = await resp.json();
+                        throw new Error(error.message || 'Failed to download orders');
+                    }
+                    
+                    // Get the blob and create download link
+                    const blob = await resp.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Get filename from Content-Disposition header or use default
+                    const contentDisposition = resp.headers.get('Content-Disposition');
+                    let filename = 'orders-receipts.html';
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Show success message
+                    alert('Receipts downloaded successfully! Open the HTML file in your browser to view formatted receipts.');
+                } catch (e) {
+                    console.error(e);
+                    alert('Failed to download orders: ' + e.message);
+                }
+            }
+            
             // Make functions global
             window.showFullOrderDetails = showFullOrderDetails;
             window.updateOrderStatus = updateOrderStatus;
             window.fetchOrders = fetchOrders;
+            window.deleteOrder = deleteOrder;
+            window.downloadOrders = downloadOrders;
 
             // Category display labels
             const CATEGORY_LABELS = {
@@ -1285,6 +1435,7 @@
                                 ${product.stock || 0} ${product.stock === 1 ? 'item' : 'items'}
                             </span>
                         </td>
+                        <td>${Array.isArray(product.sizes) && product.sizes.length ? product.sizes.join(', ') : '-'}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="edit-btn" data-id="${product._id}"><i class="fas fa-edit"></i></button>
@@ -1336,8 +1487,10 @@
                     // Fill form with product data
                     document.getElementById('product-name').value = product.name;
                     document.getElementById('product-price').value = product.price;
+                    document.getElementById('product-old-price').value = (typeof product.oldPrice === 'number' ? product.oldPrice : '');
                     document.getElementById('product-category').value = product.category;
                     document.getElementById('product-description').value = product.description || '';
+                    document.getElementById('product-sizes').value = Array.isArray(product.sizes) && product.sizes.length ? product.sizes.join(', ') : '';
                     document.getElementById('product-stock').value = product.stock || 0;
 
                     // Display current image
@@ -1361,6 +1514,8 @@
                 document.getElementById('product-id').value = '';
                 productForm.reset();
                 imagePreview.innerHTML = '';
+                const sizesEl = document.getElementById('product-sizes');
+                if (sizesEl) sizesEl.value = '';
 
                 // Show modal
                 productModal.style.display = 'block';
@@ -1404,9 +1559,17 @@
                 const formData = new FormData();
                 formData.append('name', document.getElementById('product-name').value);
                 formData.append('price', document.getElementById('product-price').value);
+                const oldPriceVal = document.getElementById('product-old-price').value;
+                if (oldPriceVal !== undefined) {
+                    formData.append('oldPrice', oldPriceVal);
+                }
                 formData.append('category', document.getElementById('product-category').value);
                 formData.append('description', document.getElementById('product-description').value);
                 formData.append('stock', document.getElementById('product-stock').value);
+                const sizesVal = document.getElementById('product-sizes').value.trim();
+                if (sizesVal.length > 0) {
+                    formData.append('sizes', sizesVal);
+                }
 
                 // Add image if selected
                 if (productImageInput.files.length > 0) {
@@ -1420,13 +1583,15 @@
                         // Update existing product
                         response = await fetch(`${API_BASE_URL}/products/${productId}`, {
                             method: 'PUT',
-                            body: formData
+                            body: formData,
+                            credentials: 'include'
                         });
                     } else {
                         // Create new product
                         response = await fetch(`${API_BASE_URL}/products`, {
                             method: 'POST',
-                            body: formData
+                            body: formData,
+                            credentials: 'include'
                         });
                     }
 
@@ -1457,7 +1622,8 @@
 
                 try {
                     const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        credentials: 'include'
                     });
 
                     if (!response.ok) {
