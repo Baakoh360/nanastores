@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://nanastores.onrender.com/sitemap.xml
+Sitemap: https://ahomkamarket.onrender.com/sitemap.xml
+
